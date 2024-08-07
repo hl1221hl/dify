@@ -163,31 +163,33 @@ class AnalyticdbVector(BaseVector):
         self.add_texts(texts, embeddings)
 
     def add_texts(
-        self, documents: list[Document], embeddings: list[list[float]], **kwargs
+            self, documents: list[Document], embeddings: list[list[float]], **kwargs
     ):
         from alibabacloud_gpdb20160503 import models as gpdb_20160503_models
-        rows: list[gpdb_20160503_models.UpsertCollectionDataRequestRows] = []
-        for doc, embedding in zip(documents, embeddings, strict=True):
-            metadata = {
-                "ref_doc_id": doc.metadata["doc_id"],
-                "page_content": doc.page_content,
-                "metadata_": json.dumps(doc.metadata),
-            }
-            rows.append(
-                gpdb_20160503_models.UpsertCollectionDataRequestRows(
-                    vector=embedding,
-                    metadata=metadata,
+
+        for i in range(0, len(documents), 100):
+            rows: list[gpdb_20160503_models.UpsertCollectionDataRequestRows] = []
+            for doc, embedding in zip(documents[i:i + 100], embeddings[i:i + 100], strict=True):
+                metadata = {
+                    "ref_doc_id": doc.metadata["doc_id"],
+                    "page_content": doc.page_content,
+                    "metadata_": json.dumps(doc.metadata),
+                }
+                rows.append(
+                    gpdb_20160503_models.UpsertCollectionDataRequestRows(
+                        vector=embedding,
+                        metadata=metadata,
+                    )
                 )
+            request = gpdb_20160503_models.UpsertCollectionDataRequest(
+                dbinstance_id=self.config.instance_id,
+                region_id=self.config.region_id,
+                namespace=self.config.namespace,
+                namespace_password=self.config.namespace_password,
+                collection=self._collection_name,
+                rows=rows,
             )
-        request = gpdb_20160503_models.UpsertCollectionDataRequest(
-            dbinstance_id=self.config.instance_id,
-            region_id=self.config.region_id,
-            namespace=self.config.namespace,
-            namespace_password=self.config.namespace_password,
-            collection=self._collection_name,
-            rows=rows,
-        )
-        self._client.upsert_collection_data(request)
+            self._client.upsert_collection_data(request)
 
     def text_exists(self, id: str) -> bool:
         from alibabacloud_gpdb20160503 import models as gpdb_20160503_models
