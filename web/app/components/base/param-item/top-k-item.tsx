@@ -15,7 +15,7 @@ const VALUE_LIMIT = {
   default: 2,
   step: 1,
   min: 1,
-  max: 10,
+  max: 100,
 }
 
 const key = 'top_k'
