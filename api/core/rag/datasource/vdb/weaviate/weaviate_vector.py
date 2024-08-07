@@ -21,6 +21,7 @@ class WeaviateConfig(BaseModel):
     endpoint: str
     api_key: Optional[str] = None
     batch_size: int = 100
+    gse_enabled: bool = False
 
     @model_validator(mode='before')
     def validate_config(cls, values: dict) -> dict:
@@ -35,6 +36,7 @@ class WeaviateVector(BaseVector):
         super().__init__(collection_name)
         self._client = self._init_client(config)
         self._attributes = attributes
+        self._gse_enabled = config.gse_enabled
 
     def _init_client(self, config: WeaviateConfig) -> weaviate.Client:
         auth_config = weaviate.auth.AuthApiKey(api_key=config.api_key)
@@ -258,6 +260,7 @@ class WeaviateVector(BaseVector):
                 {
                     "name": "text",
                     "dataType": ["text"],
+                    "tokenization": "gse" if self._gse_enabled else "word",
                 }
             ],
         }
@@ -284,7 +287,8 @@ class WeaviateVectorFactory(AbstractVectorFactory):
             config=WeaviateConfig(
                 endpoint=dify_config.WEAVIATE_ENDPOINT,
                 api_key=dify_config.WEAVIATE_API_KEY,
-                batch_size=dify_config.WEAVIATE_BATCH_SIZE
+                batch_size=dify_config.WEAVIATE_BATCH_SIZE,
+                gse_enabled=dify_config.WEAVIATE_GSE_ENABLED
             ),
             attributes=attributes
         )

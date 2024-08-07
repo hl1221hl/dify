@@ -28,3 +28,8 @@ class WeaviateConfig(BaseSettings):
         description='Weaviate batch size',
         default=100,
     )
+
+    WEAVIATE_GSE_ENABLED: bool = Field(
+        description='whether to enable gse tokenization',
+        default=False,
+    )
